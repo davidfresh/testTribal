@@ -36,29 +36,38 @@ extension ListJokesPresenter: ListJokesContract.Presenter {
 
     func getListJokes() {
         viewState = .loading
+        
+        let dispatchGroup = DispatchGroup()
+        
         for _ in 1...15 {
-        jokeUseCase.getListOfJokeRandom() { [weak self] result in
-            switch result {
-            case .success(let joke):
+            dispatchGroup.enter()
+            
+            jokeUseCase.getListOfJokeRandom() { [weak self] result in
+                defer {
+                    dispatchGroup.leave()
+                }
                 
-                guard let jokesViewModel = self?.createJokesViewModel(joke: joke) else {
-                    return
+                switch result {
+                case .success(let joke):
+                    guard let jokesViewModel = self?.createJokesViewModel(joke: joke) else {
+                        return
+                    }
+                    self?.jokesViewModel.append(jokesViewModel)
+                    
+                case .failure(let error):
+                    var message = error.localizedDescription
+                    if let errorUseCase = error as? JokeRandomUseCaseError,
+                       let errorDescription = errorUseCase.errorDescription {
+                        message = errorDescription
+                    }
+                    self?.viewState = .error(error: message)
                 }
-                self?.jokesViewModel.append(jokesViewModel)
-                
-                if self?.jokesViewModel.count == 15 {
-                   self?.viewState = .render(joke: self?.jokesViewModel ?? [])
-                }
-            case .failure(let error):
-                var message = error.localizedDescription
-                if let errorUseCase = error as? JokeRandomUseCaseError,
-                   let errorDescription = errorUseCase.errorDescription {
-                    message = errorDescription
-                }
-                self?.viewState = .error(error: message)
             }
         }
-      }
+        
+        dispatchGroup.notify(queue: .main) {
+            self.viewState = .render(joke: self.jokesViewModel)
+        }
     }
 }
 
