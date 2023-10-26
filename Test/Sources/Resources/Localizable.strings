@@ -1,0 +1,9 @@
+
+
+// MARK: Initial View
+// MARK: List meals View
+"NAVIGATION_TITLE_LIST_JOKES_VIEW" = "Jokes random";
+
+// MARK: Alert
+"ALERT_TITLE_ERROR" = "Occurs an error";
+"ALERT_BUTTON_OK" = "OK";
